@@ -383,8 +383,18 @@ void DisplayDevice::onSwapBuffersCompleted() const {
 }
 
 bool DisplayDevice::makeCurrent() const {
+    int numBuffers = mDisplaySurface->numBuffers();
+    int numBuffersAcquired = mDisplaySurface->numBuffersAcquired();
+    if (numBuffers > 0 && numBuffers == numBuffersAcquired) {
+        ALOGE("Detected possible DisplaySurface deadlock (no buffers available for EGL to dequeue)");
+    }
+
     bool success = mFlinger->getRenderEngine().setCurrentSurface(*mSurface);
-    setViewportAndProjection();
+
+    if (success) {
+        setViewportAndProjection();
+    }
+
     return success;
 }
 

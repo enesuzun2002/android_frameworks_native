@@ -71,6 +71,9 @@ public:
 
     virtual const sp<Fence>& getClientTargetAcquireFence() const = 0;
 
+    virtual int numBuffers() const { return 0; }
+    virtual int numBuffersAcquired() const { return 0; }
+
 protected:
     DisplaySurface() {}
     virtual ~DisplaySurface() {}
