@@ -62,9 +62,7 @@ FramebufferSurface::FramebufferSurface(HWComposer& hwc, int disp,
     mHwc(hwc),
     mHasPendingRelease(false),
     mPreviousBufferSlot(BufferQueue::INVALID_BUFFER_SLOT),
-    mPreviousBuffer(),
-    mNumBuffers(0),
-    mNumBuffersAcquired(0)
+    mPreviousBuffer()
 {
     ALOGV("Creating for display %d", disp);
 
@@ -78,7 +76,6 @@ FramebufferSurface::FramebufferSurface(HWComposer& hwc, int disp,
             activeConfig->getHeight());
     mConsumer->setMaxAcquiredBufferCount(
             SurfaceFlinger::maxFrameBufferAcquiredBuffers - 1);
-    mNumBuffers = SurfaceFlinger::maxFrameBufferAcquiredBuffers;
 }
 
 void FramebufferSurface::resizeBuffers(const uint32_t width, const uint32_t height) {
@@ -123,10 +120,6 @@ status_t FramebufferSurface::nextBuffer(uint32_t& outSlot,
         return err;
     }
 
-    if (item.mSlot != mCurrentBufferSlot) {
-        ++mNumBuffersAcquired;
-    }
-
     // If the BufferQueue has freed and reallocated a buffer in mCurrentSlot
     // then we may have acquired the slot we already own.  If we had released
     // our current buffer before we call acquireBuffer then that release call
@@ -163,7 +156,6 @@ void FramebufferSurface::freeBufferLocked(int slotIndex) {
     ConsumerBase::freeBufferLocked(slotIndex);
     if (slotIndex == mCurrentBufferSlot) {
         mCurrentBufferSlot = BufferQueue::INVALID_BUFFER_SLOT;
-        --mNumBuffersAcquired;
     }
 }
 
@@ -179,10 +171,6 @@ void FramebufferSurface::onFrameCommitted() {
         status_t result = releaseBufferLocked(mPreviousBufferSlot, mPreviousBuffer);
         ALOGE_IF(result != NO_ERROR, "onFrameCommitted: error releasing buffer:"
                 " %s (%d)", strerror(-result), result);
-
-        if (result == NO_ERROR) {
-            --mNumBuffersAcquired;
-        }
 
         mPreviousBuffer.clear();
         mHasPendingRelease = false;

@@ -1680,6 +1680,8 @@ void SurfaceFlinger::doDebugFlashRegions()
                 const int32_t height = hw->getHeight();
                 auto& engine(getRenderEngine());
                 engine.fillRegionWithColor(dirtyRegion, height, 1, 0, 1, 1);
+
+                hw->swapBuffers(getHwComposer());
             }
         }
     }
@@ -2203,6 +2205,9 @@ void SurfaceFlinger::doComposition() {
 
             // repaint the framebuffer (if needed)
             doDisplayComposition(hw, dirtyRegion);
+
+            hw->dirtyRegion.clear();
+            hw->flip();
         }
     }
     postFramebuffer();
@@ -2221,18 +2226,12 @@ void SurfaceFlinger::postFramebuffer()
         if (!displayDevice->isDisplayOn()) {
             continue;
         }
-
-        // swap buffers (presentation)
-        displayDevice->makeCurrent();
-        displayDevice->swapBuffers(getHwComposer());
-        displayDevice->dirtyRegion.clear();
-        displayDevice->flip();
-
         const auto hwcId = displayDevice->getHwcDisplayId();
         if (hwcId >= 0) {
             getBE().mHwc->presentAndGetReleaseFences(hwcId);
         }
         displayDevice->onSwapBuffersCompleted();
+        displayDevice->makeCurrent();
         for (auto& layer : displayDevice->getVisibleLayersSortedByZ()) {
             sp<Fence> releaseFence = Fence::NO_FENCE;
 
@@ -3016,7 +3015,8 @@ void SurfaceFlinger::doDisplayComposition(
     ALOGV("doDisplayComposition");
     if (!doComposeSurfaces(displayDevice)) return;
 
-    // TODO: Propogate error from doComposeSurface to postFramebuffer loop
+    // swap buffers (presentation)
+    displayDevice->swapBuffers(getHwComposer());
 }
 
 bool SurfaceFlinger::doComposeSurfaces(const sp<const DisplayDevice>& displayDevice)

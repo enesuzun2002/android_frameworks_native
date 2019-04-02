@@ -50,9 +50,6 @@ public:
 
     virtual const sp<Fence>& getClientTargetAcquireFence() const override;
 
-    virtual int numBuffers() const { return mNumBuffers; }
-    virtual int numBuffersAcquired() const { return mNumBuffersAcquired; }
-
 private:
     virtual ~FramebufferSurface() { }; // this class cannot be overloaded
 
@@ -97,9 +94,6 @@ private:
     bool mHasPendingRelease;
     int mPreviousBufferSlot;
     sp<GraphicBuffer> mPreviousBuffer;
-
-    int mNumBuffers;
-    int mNumBuffersAcquired;
 };
 
 // ---------------------------------------------------------------------------
